@@ -11,7 +11,7 @@ public:
 	virtual bool IsDone() const = 0;
 	virtual T GetCurrent() const = 0;
 };
-
+//test
 template<typename T>
 class StackArrayIterator : public Iterator<T>
 {

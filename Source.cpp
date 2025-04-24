@@ -4,7 +4,7 @@
 #include <vector>
 #include "Header.h"
 using namespace std;
-//asdasdasdasd
+
 enum class AnomalyType : int
 {
     Wormhole = 1,
