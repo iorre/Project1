@@ -14,15 +14,61 @@ enum class AnomalyType : int
     Undefined = 0
 };
 
+enum class DestructionType : int
+{
+    Undefined,
+    TotalAnnihilation,
+    HalfDestroyed,
+    NoVictims
+
+};
+
+class DestructionStrategy
+{
+public:
+    virtual void Destruction(){};
+};
+
+class TotalAnnihilationStategy : public DestructionStrategy
+{
+    void Destruction() override { cout << "Star is annihilated totaly.."; }
+};
+
+class HalfDestroyedStategy : public DestructionStrategy
+{
+    void Destruction() override { cout << "Star is half destroyed.."; }
+};
+
+class NoVictimsStategy : public DestructionStrategy
+{
+    void Destruction() override { cout << "No victims after star explode.."; }
+};
+
+DestructionStrategy* CreateDestructionStrategy(DestructionType type)
+{
+    if (type == DestructionType::TotalAnnihilation) { return new TotalAnnihilationStategy; }
+    else if (type == DestructionType::HalfDestroyed) { return new HalfDestroyedStategy; }
+    else if (type == DestructionType::NoVictims) { return new NoVictimsStategy; }
+    else { return nullptr; }
+}
+
 class SpaceAnomaly
 {
+private:
+    DestructionStrategy* DestructionType;
+
+    void DestructionUsingStrategy()
+    {
+        if (DestructionType == nullptr) { cout << "Error with type"; return; }
+        else { DestructionType->Destruction(); }
+    }
 public:
     string name;
     double distance;
 
     SpaceAnomaly(string name, double distance) : name(name), distance(distance) {};
 
-    virtual ~SpaceAnomaly() {};
+    virtual ~SpaceAnomaly() { if (DestructionType != nullptr) { delete DestructionType; } };
 
     virtual void Analyze() const {
         cout << "Anomaly info:\nName - " << name << "\nDistance - " << distance;
@@ -39,6 +85,12 @@ public:
     virtual AnomalyType GetType() const {
         return AnomalyType::Undefined;
     }
+    void Destruction()
+    {
+        DestructionUsingStrategy();
+    }
+    void SetDestructionType(DestructionStrategy* destructionType) { DestructionType = destructionType; }
+
 };
 
 class Wormhole : public SpaceAnomaly
@@ -46,7 +98,10 @@ class Wormhole : public SpaceAnomaly
 public:
     int stability;
 
-    Wormhole(string name, double distance, int stability) : SpaceAnomaly(name, distance), stability(stability) {};
+    Wormhole(string name, double distance, int stability) : SpaceAnomaly(name, distance), stability(stability) 
+    {
+        SetDestructionType(CreateDestructionStrategy(DestructionType::TotalAnnihilation));
+    }
     ~Wormhole() {};
 
     void Analyze() const override {
@@ -75,7 +130,10 @@ class DarkNebula : public SpaceAnomaly
 public:
     int opacity;
 
-    DarkNebula(string name, double distance, int opacity) : SpaceAnomaly(name, distance), opacity(opacity) {};
+    DarkNebula(string name, double distance, int opacity) : SpaceAnomaly(name, distance), opacity(opacity) 
+    {
+        SetDestructionType(CreateDestructionStrategy(DestructionType::HalfDestroyed));
+    }
     ~DarkNebula() {};
 
     void Analyze() const override {
@@ -103,7 +161,10 @@ class EnergyPulse : public SpaceAnomaly
 public:
     int intensity;
 
-    EnergyPulse(string name, double distance, int intensity) : SpaceAnomaly(name, distance), intensity(intensity) {};
+    EnergyPulse(string name, double distance, int intensity) : SpaceAnomaly(name, distance), intensity(intensity) 
+    {
+        SetDestructionType(CreateDestructionStrategy(DestructionType::NoVictims));
+    };
     ~EnergyPulse() {};
 
     void Analyze() const override {
@@ -132,7 +193,7 @@ SpaceAnomaly* CreateAnomaly(AnomalyType type)
     SpaceAnomaly* newAnomaly = nullptr;
 
     if (type == AnomalyType::Wormhole) { newAnomaly = new Wormhole("WormWorm", rand() % (10001), rand() % 11); }
-    else if (type == AnomalyType::DarkNebula) { newAnomaly = new DarkNebula("Nebula_1231", rand() % (10001), rand() % 11); }
+    else if (type == AnomalyType::DarkNebula) { newAnomaly = new DarkNebula("Nebula", rand() % (10001), rand() % 11); }
     else if (type == AnomalyType::EnergyPulse) { newAnomaly = new EnergyPulse("Death", rand() % (10001), rand() % 11); }
 
     return newAnomaly;
@@ -197,13 +258,13 @@ public:
     }
 };
 
-void AnalyzeAll(Iterator<SpaceAnomaly*>* it)
+void DestructionAll(Iterator<SpaceAnomaly*>* it)
 {
     for (it->First(); !it->IsDone(); it->Next())
     {
         SpaceAnomaly* currentAnomaly = it->GetCurrent();
-        currentAnomaly->Analyze();
-        cout << "---------------------" << endl;
+        currentAnomaly->Destruction();
+        cout << endl;
     }
 }
 
@@ -217,11 +278,13 @@ int main()
         int anomaly_num = rand() % 3 + 1;
         AnomalyType anomaly_type = static_cast<AnomalyType>(anomaly_num);
         SpaceAnomaly* newAnomaly = CreateAnomaly(anomaly_type);
+        newAnomaly->SetDestructionType(CreateDestructionStrategy(DestructionType::NoVictims));
         anomalyStack.Push(newAnomaly);
     }
-    cout << "Stack class: " << endl << endl;
+    cout << "Stack class: " << endl;
     Iterator<SpaceAnomaly*>* allStackIt = anomalyStack.GetIterator();
-    AnalyzeAll(allStackIt);
+    DestructionAll(allStackIt);
+    cout << endl;
     delete allStackIt;
 
     ArrayClass<SpaceAnomaly*> anomalyArray;
@@ -232,26 +295,28 @@ int main()
         SpaceAnomaly* newAnomaly = CreateAnomaly(anomaly_type);
         anomalyArray.Add(newAnomaly);
     }
-    cout << "Array class: " << endl << endl;
+    cout << "Array class: " << endl;
     Iterator<SpaceAnomaly*>* allArrIt = anomalyArray.GetIterator();
-    AnalyzeAll(allArrIt);
+    DestructionAll(allArrIt);
     delete allArrIt;
-
+    cout << endl;
     Iterator<SpaceAnomaly*>* TypeAnomalyFitler = new AnomalyTypeFilterDecorator(anomalyStack.GetIterator(), AnomalyType::Wormhole);
-    cout << "Only wormholes: " << endl << endl;
-    AnalyzeAll(TypeAnomalyFitler);
+    cout << "Only wormholes: " << endl;
+    DestructionAll(TypeAnomalyFitler);
     delete TypeAnomalyFitler;
-
+    cout << endl;
     Iterator<SpaceAnomaly*>* MostDangerIt = new MostDangerDecorator(anomalyArray.GetIterator());
     MostDangerIt->First();
     SpaceAnomaly* MostDangerAnomaly = MostDangerIt->GetCurrent();
-    cout << "Most danger anomaly with danger " << MostDangerAnomaly->PredictDanger() << " is: " << endl << endl;
+    cout << "Most danger anomaly with danger " << MostDangerAnomaly->PredictDanger() << " is: " << endl;
     MostDangerAnomaly->Analyze();
+    cout << endl;
     delete MostDangerIt;
 
     Iterator<SpaceAnomaly*>* AnomalyInteraction = new AnomalyIntecartionDecorator(anomalyStack.GetIterator());
-    cout << "Interactions: " << endl << endl;
+    cout << "Interactions: " << endl;
     AnomalyInteraction->First();
+    cout << endl;
     delete AnomalyInteraction;
 
     vector<SpaceAnomaly*> anomalyVector;
@@ -264,8 +329,10 @@ int main()
         anomalyVector.push_back(newObject);
     }
     Iterator<SpaceAnomaly*>* afterAdaptIt = new ConstIteratorAdapter<vector<SpaceAnomaly*>, SpaceAnomaly*>(&anomalyVector);
-    cout << "After adaptation: " << endl << endl;
-    AnalyzeAll(afterAdaptIt);
+    cout << "After adaptation: " << endl;
+    DestructionAll(afterAdaptIt);
+    cout << endl;
     delete afterAdaptIt;
+
     return 0;
 }
