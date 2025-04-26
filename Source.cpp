@@ -278,7 +278,6 @@ int main()
         int anomaly_num = rand() % 3 + 1;
         AnomalyType anomaly_type = static_cast<AnomalyType>(anomaly_num);
         SpaceAnomaly* newAnomaly = CreateAnomaly(anomaly_type);
-        newAnomaly->SetDestructionType(CreateDestructionStrategy(DestructionType::NoVictims));
         anomalyStack.Push(newAnomaly);
     }
     cout << "Stack class: " << endl;
